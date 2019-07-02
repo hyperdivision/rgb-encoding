@@ -1,0 +1,16 @@
+{
+  "title": "string",
+  "version": 234,
+  "description": "string",
+  "contract_url": "string",
+  "issuance_utxo": "43fe44",
+  "network": "43fe44",
+  "total_supply": 0,
+  "min_amount": 0,
+  "max_hops": 0,
+  "reissuance_enabled": true,
+  "reissuance_utxo": "string",
+  "burn_address": "string",
+  "commitment_scheme": "04",
+  "blueprint_type": "01"
+}
