@@ -17,10 +17,10 @@ function encode (contract, buf, offset) {
   if (!offset) offset = 0
   var startIndex = offset
 
-  switch (contract['blueprint_type']) {
+  switch (contract.blueprint_type) {
     case 0x01 : {
-      assert(contract['owner_utxo'], 'Owner UTXO must be given.')
-      string.encode(contract['owner_utxo'], buf, offset)
+      assert(contract.owner_utxo, 'Owner UTXO must be given.')
+      string.encode(contract.owner_utxo, buf, offset)
       offset += string.encode.bytes
 
       encode.bytes = offset - startIndex
@@ -28,16 +28,16 @@ function encode (contract, buf, offset) {
     }
 
     case 0x02 : {
-      string.encode(contract['deposit_address'], buf, offset)
+      string.encode(contract.deposit_address, buf, offset)
       offset += string.encode.bytes
 
-      int.encode(contract['price_sat'], buf, offset, 64)
+      int.encode(contract.price_sat, buf, offset, 64)
       offset += int.encode.bytes
 
-      int.encode(contract['from_block'], buf, offset, 16)
+      int.encode(contract.from_block, buf, offset, 16)
       offset += int.encode.bytes
 
-      int.encode(contract['to_block'], buf, offset, 16)
+      int.encode(contract.to_block, buf, offset, 16)
       offset += int.encode.bytes
 
       encode.bytes = offset - startIndex
@@ -45,30 +45,30 @@ function encode (contract, buf, offset) {
     }
 
     case 0x03 : {
-      string.encode(contract['title'], buf, offset)
+      string.encode(contract.title, buf, offset)
       offset += string.encode.bytes
 
-      if (contract['description']) {
-        string.encode(contract['description'], buf, offset)
+      if (contract.description) {
+        string.encode(contract.description, buf, offset)
         offset += string.encode.bytes
       } else {
         string.encode('', buf, offset)
         offset += string.encode.bytes
       }
 
-      string.encode(contract['network'], buf, offset, true)
+      string.encode(contract.network, buf, offset, true)
       offset += string.encode.bytes
 
-      int.encode(contract['min_amount'], buf, offset, 64)
+      int.encode(contract.min_amount, buf, offset, 64)
       offset += int.encode.bytes
 
-      int.encode(contract['max_hops'], buf, offset, 16)
+      int.encode(contract.max_hops, buf, offset, 16)
       offset += int.encode.bytes
 
-      string.encode(contract['burn_address'], buf, offset)
+      string.encode(contract.burn_address, buf, offset)
       offset += string.encode.bytes
 
-      string.encode(contract['commitment_scheme'], buf, offset, true)
+      string.encode(contract.commitment_scheme, buf, offset, true)
       offset += string.encode.bytes
 
       encode.bytes = offset - startIndex
@@ -83,7 +83,7 @@ function decode (buf, offset, blueprint) {
   var body = {}
   switch (blueprint) {
     case 0x01 : {
-      body['owner_utxo'] = string.decode(buf, offset)
+      body.owner_utxo = string.decode(buf, offset)
       offset += string.decode.bytes
 
       decode.bytes = offset - startIndex
@@ -91,16 +91,16 @@ function decode (buf, offset, blueprint) {
     }
 
     case 0x02 : {
-      body['deposit_address'] = string.decode(buf, offset)
+      body.deposit_address = string.decode(buf, offset)
       offset += string.decode.bytes
 
-      body['price_sat'] = int.decode(buf, offset, 8)
+      body.price_sat = int.decode(buf, offset, 8)
       offset += 8
 
-      body['from_block'] = int.decode(buf, offset, 2)
+      body.from_block = int.decode(buf, offset, 2)
       offset += 2
 
-      body['to_block'] = int.decode(buf, offset, 2)
+      body.to_block = int.decode(buf, offset, 2)
       offset += 2
 
       decode.bytes = offset - startIndex
@@ -108,28 +108,28 @@ function decode (buf, offset, blueprint) {
     }
 
     case 0x03 : {
-      contract['title'] = string.decode(buf, offset)
+      contract.title = string.decode(buf, offset)
       offset += string.decode.bytes
 
-      contract['description'] = string.decode(buf, offset)
+      contract.description = string.decode(buf, offset)
       offset += string.decode.bytes
 
-      contract['description'] = string.decode(buf, offset)
+      contract.description = string.decode(buf, offset)
       offset += string.decode.bytes
 
-      contract['network'] = string.decode(buf, offset, true)
+      contract.network = string.decode(buf, offset, true)
       offset += string.decode.bytes
 
-      contract['min_amount'] = int.decode(buf, offset, 8)
+      contract.min_amount = int.decode(buf, offset, 8)
       offset += int.decode.bytes
 
-      contract['max_hops'] = int.decode(buf, offset, 2)
+      contract.max_hops = int.decode(buf, offset, 2)
       offset += int.decode.bytes
 
-      contract['burn_address'] = string.decode(buf, offset)
+      contract.burn_address = string.decode(buf, offset)
       offset += string.decode.bytes
 
-      contract['commitment_scheme'] = string.decode(buf, offset, true)
+      contract.commitment_scheme = string.decode(buf, offset, true)
       offset += string.decode.bytes
 
       decode.bytes = offset - startIndex
@@ -140,14 +140,14 @@ function decode (buf, offset, blueprint) {
 
 function encodingLength (contract) {
   var length = 0
-  switch (contract['blueprint_type']) {
+  switch (contract.blueprint_type) {
     case 0x01 : {
-      length += string.encodingLength(contract['owner_utxo'])
+      length += string.encodingLength(contract.owner_utxo)
       return length
     }
 
     case 0x02 : {
-      length += string.encodingLength(contract['deposit_address'])
+      length += string.encodingLength(contract.deposit_address)
       length += 64
       length += 16
       length += 16
@@ -155,17 +155,17 @@ function encodingLength (contract) {
     }
 
     case 0x03 : {
-      length += string.encodingLength(contract['title'])
-      if (contract['description']) {
-        length += string.encodingLength(contract['description'])
+      length += string.encodingLength(contract.title)
+      if (contract.description) {
+        length += string.encodingLength(contract.description)
       } else {
         length += 1
       }
-      length += string.encodingLength(contract['network'], true)
+      length += string.encodingLength(contract.network, true)
       length += 64
       length += 16
-      length += string.encodingLength(contract['burn_address'])
-      length += string.encodingLength(contract['commitment_scheme'], true)
+      length += string.encodingLength(contract.burn_address)
+      length += string.encodingLength(contract.commitment_scheme, true)
       return length
     }
   }
