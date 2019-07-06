@@ -1,5 +1,5 @@
-var string = require('./string.js')
-var int = require('./int.js')
+var string = require('../bitcoin-consensus-encoding//string.js')
+var int = require('../bitcoin-consensus-encoding//int.js')
 var contract = require('./example.json')
 var assert = require('nanoassert')
 
@@ -20,7 +20,7 @@ function encode (contract, buf, offset) {
   switch (contract.blueprint_type) {
     case 0x01 : {
       assert(contract.owner_utxo, 'Owner UTXO must be given.')
-      string.encode(contract.owner_utxo, buf, offset)
+      string.encode(contract.owner_utxo, buf, offset, true)
       offset += string.encode.bytes
 
       encode.bytes = offset - startIndex
@@ -83,8 +83,8 @@ function decode (buf, offset, blueprint) {
   var body = {}
   switch (blueprint) {
     case 0x01 : {
-      body.owner_utxo = string.decode(buf, offset)
-      offset += string.decode.bytes
+      offset += 32
+      body.owner_utxo = buf.subarray(startIndex, offset).toString('hex')
 
       decode.bytes = offset - startIndex
       return body
@@ -142,7 +142,7 @@ function encodingLength (contract) {
   var length = 0
   switch (contract.blueprint_type) {
     case 0x01 : {
-      length += string.encodingLength(contract.owner_utxo)
+      length += string.encodingLength(contract.owner_utxo, true)
       return length
     }
 

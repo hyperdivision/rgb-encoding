@@ -1,5 +1,6 @@
 const header = require('./header.js')
 const body = require('./body.js')
+const eg = require('./example.json')
 
 module.exports = {
   encode: encode,
@@ -11,11 +12,10 @@ function encode (contract, buf, offset) {
   if (!offset) offset = 0
   if (!buf) buf = Buffer.alloc(encodingLength(contract))
   var startIndex = offset
-
   header.encode(contract, buf, offset)
   offset += header.encode.bytes
 
-  body.decode(contract, buf, offset)
+  body.encode(contract, buf, offset)
   offset += body.encode.bytes
 
   encode.bytes = offset - startIndex
@@ -25,11 +25,11 @@ function encode (contract, buf, offset) {
 function decode (buf, offset) {
   if (!offset) offset = 0
   var startIndex = offset
-
+    
   var contract = header.decode(buf, offset)
   offset += header.decode.bytes
 
-  var contractBody = body.decode(buf, offset)
+  var contractBody = body.decode(buf, offset, contract.blueprint_type)
   offset += body.decode.bytes
 
   Object.keys(contractBody).forEach(
