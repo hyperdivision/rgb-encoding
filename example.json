@@ -11,7 +11,7 @@
   "reissuance_enabled": true,
   "reissuance_utxo": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
   "burn_address": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
-  "commitment_scheme": "04",
+  "commitment_scheme": 2,
   "blueprint_type": 1,
   "owner_utxo": "49cafdbc3e9133a75b411a3a6d705dca2e9565b660123b6535babb7567c28f02"
 }

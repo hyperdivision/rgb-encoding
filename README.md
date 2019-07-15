@@ -3,7 +3,7 @@
 [![Build Status](https://travis-ci.org/hyperdivision/rgb-encoding.svg?branch=master)](https://travis-ci.org/hyperdivision/rgb-encoding)
 [![abstract-encoding](https://img.shields.io/badge/abstract--encoding-compliant-brightgreen.svg?style=flat)](https://github.com/mafintosh/abstract-encoding)
 
-> Abstract encoding for Bitcoin related objects
+> Abstract encoding for RGB related objects
 
 ## Usage
 

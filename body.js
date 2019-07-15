@@ -1,5 +1,5 @@
-var string = require('../bitcoin-consensus-encoding//string.js')
-var int = require('../bitcoin-consensus-encoding//int.js')
+var string = require('../bitcoin-consensus-encoding/string.js')
+var int = require('../bitcoin-consensus-encoding/int.js')
 var contract = require('./example.json')
 var assert = require('nanoassert')
 
@@ -114,7 +114,10 @@ function decode (buf, offset, blueprint) {
       contract.description = string.decode(buf, offset)
       offset += string.decode.bytes
 
-      contract.description = string.decode(buf, offset)
+      var description = string.decode(buf, offset)
+      if (description !== '') {
+        contract.description = description
+      }
       offset += string.decode.bytes
 
       contract.network = string.decode(buf, offset, true)
