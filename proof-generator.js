@@ -30,7 +30,7 @@ var outpoint = {
   address: '49cafdbc3e9133a75b411a3a6d705dca2e9565b660123b6535babb7567c28f02'
 }
 
-var counter = {}
+var counter = 1
 
 // function to generate a simple branched proof
 // depth is how many steps away from the root proof
@@ -39,9 +39,11 @@ function proofGen (depth, branch) {
   var proof = {}
   proof.inputs = []
   if (depth === 1) {
+    counter++
     proof.contract = contract
+    proof.contract.max_hops = counter
   } else {
-    counter[depth]++
+    counter++
     for (let j = branch; j > 0; j--) {
       proof.inputs.push(proofGen(depth - 1, branch))
     }

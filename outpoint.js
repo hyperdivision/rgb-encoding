@@ -76,3 +76,7 @@ function encodingLength (outpoint) {
 // }
 
 // console.log(decode(encode(outpoint)))
+let test = {
+  'type': "address",
+  'address': 3
+}

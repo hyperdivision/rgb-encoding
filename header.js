@@ -1,14 +1,13 @@
 var string = require('../bitcoin-consensus-encoding/string.js')
 var int = require('../bitcoin-consensus-encoding/int.js')
 var bool = require('../bitcoin-consensus-encoding/boolean.js')
-var outpoint = require('../bitcoin-consensus-encoding/outpoint.js')
+var outpoint = require('./outpoint.js')
 var assert = require('nanoassert')
 
 module.exports = {
   encode,
   decode,
-  encodingLength,
-  verify
+  encodingLength
 }
 
 function encode (contract, buf, offset) {

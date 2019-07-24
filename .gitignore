@@ -1,1 +1,8 @@
 node_modules
+package-lock.json
+proof-gen.js
+test.decode
+verification_protocol.txt
+example.proof
+proof-generator.js
+.DS_Store
