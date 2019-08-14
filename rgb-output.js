@@ -28,6 +28,7 @@ function encode (output, buf, offset) {
 
 function decode (buf, offset) {
   var output = {}
+  if (!offset) offset = 0
   var start = offset
 
   output.assetId = string.decode(buf, offset, 32)
@@ -45,10 +46,19 @@ function decode (buf, offset) {
 
 function encodingLength (output) {
   var length = 0
-
   length += string.encodingLength(output.assetId, true)
   length += 8
   length += outpoint.encodingLength(output.outpoint)
 
   return length
 }
+
+// WORKING
+
+// let o1 = { assetId:
+//    'e0115d49c7b22619793dd996866f07158d720a27b7fa08b4f43f34a75ae7034d',
+//   amount: 3,
+//   outpoint: { type: 'address', address: 0 }
+// }
+
+// console.log(decode(encode(o1)))

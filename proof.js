@@ -54,12 +54,21 @@ function encodingLength (proof, depth) {
     length += output.encodingLength(entry)
   }
 
-  length += string.encodingLength(proof.metadata)
-  length += string.encodingLength(proof.tx.id, true)
-  var txOutLength = proof.tx.outputs.length
-  length += varint.encodingLength(txOutLength)
+  if (proof.metadata) {
+    length += string.encodingLength(proof.metadata)
+  } else {
+    length++
+  }
 
-  length += 4 * proof.tx.outputs.length
+  if (proof.tx.id) {
+    length += string.encodingLength(proof.tx.id, true)
+    var txOutLength = proof.tx.outputs.length
+    length += varint.encodingLength(txOutLength)
+
+    length += 4 * proof.tx.outputs.length
+  } else {
+    length++
+  }
 
   if (proof.contract) {
     length += contract.encodingLength(proof.contract)
@@ -109,19 +118,29 @@ function encoder (proof, buf, offset, depth) {
     offset += output.encode.bytes
   }
 
-  string.encode(proof.metadata, buf, offset)
-  offset += string.encode.bytes
+  if (proof.metadata) {
+    string.encode(proof.metadata, buf, offset)
+    offset += string.encode.bytes
+  } else {
+    string.encode('', buf, offset)
+    offset++
+  }
 
-  string.encode(proof.tx.id, buf, offset, true)
-  offset += string.encode.bytes
+  if (proof.tx.id) {
+    string.encode(proof.tx.id, buf, offset, true)
+    offset += string.encode.bytes
 
-  var txOutLength = proof.tx.outputs.length
-  varint.encode(txOutLength, buf, offset)
-  offset += varint.encode.bytes
+    var txOutLength = proof.tx.outputs.length
+    varint.encode(txOutLength, buf, offset)
+    offset += varint.encode.bytes
 
-  for (let output of proof.tx.outputs) {
-    int.encode(output, buf, offset, 32)
-    offset += int.encode.bytes
+    for (let output of proof.tx.outputs) {
+      int.encode(output, buf, offset, 32)
+      offset += int.encode.bytes
+    }
+  } else {
+    buf.writeUInt8(0, offset)
+    offset++
   }
 
   if (proof.contract) {
@@ -171,25 +190,31 @@ function decoder (buf, offset, depth = 0) {
     counter--
   }
 
-  proof.metadata = string.decode(buf, offset)
+  let indicator = string.decode(buf, offset)
+  if (indicator !== '') proof.metadata = indicator
   offset += string.decode.bytes
 
-  proof.tx = {}
-  proof.tx.id = string.decode(buf, offset, 16)
-  offset += string.decode.bytes
+  indicator = buf.readUInt8(offset)
+  if (indicator !== 0) {
+    proof.tx = {}
+    proof.tx.id = string.decode(buf, offset, 32)
+    offset += string.decode.bytes
 
-  proof.tx.outputs = []
+    proof.tx.outputs = []
 
-  counter = varint.decode(buf, offset)
-  offset += varint.decode.bytes
+    counter = varint.decode(buf, offset)
+    offset += varint.decode.bytes
 
-  while (counter > 0) {
-    proof.tx.outputs.push(buf.readUInt32BE(offset))
-    offset += 4
-    counter--
+    while (counter > 0) {
+      proof.tx.outputs.push(buf.readUInt32BE(offset))
+      offset += 4
+      counter--
+    }
+  } else {
+    offset++
   }
 
-  var indicator = buf.readUInt8(offset)
+  indicator = buf.readUInt8(offset)
   if (indicator !== 0) {
     proof.contract = contract.decode(buf, offset)
     offset += contract.decode.bytes
@@ -198,9 +223,8 @@ function decoder (buf, offset, depth = 0) {
   }
 
   indicator = string.decode(buf, offset)
-
   if (indicator !== '') {
-    proof.originalPK = string.decode(buf, offset, 64)
+    proof.originalPK = string.decode(buf, offset, 33)
     offset += string.decode.bytes
   } else {
     offset++
@@ -211,8 +235,9 @@ function decoder (buf, offset, depth = 0) {
   return proof
 }
 
-// var exampleProof = fs.readFileSync('./example.proof').toString()
+// var exampleProof = fs.readFileSync('../wallet-rgb/lib/verification/transfer.proof').toString()
 // exampleProof = JSON.parse(exampleProof)
+// console.log(int.decode(int.encode(3, null, null, 64)))
 // console.log(getInputAmounts(exampleProof, '49cafdbc3e9133a75b411a3a6d705dca2e9565b660123b6535babb7567c28f02'))
 // console.log(getOutputAmounts(exampleProof))
 
@@ -220,6 +245,6 @@ function decoder (buf, offset, depth = 0) {
 // console.log(encoded.byteLength / 2**20)
 // var decoded = decode(encoded)
 
-// var decoded = decode(encode(exampleProof))
+// console.log(JSON.stringify(decode(encode(exampleProof)), null, 2))
 
 // fs.writeFile('test.decode', JSON.stringify(decoded, null, 2), (err) => { if (err) throw err })

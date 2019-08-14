@@ -48,3 +48,28 @@ function encodingLength (contract) {
   length += body.encodingLength(contract)
   return length
 }
+
+// WORKING
+
+// let c1 = {
+//   "title": "string",
+//   "version": 234,
+//   "description": "string",
+//   "contract_url": "string",
+//   "issuance_utxo": {
+//     "txid": "9cafdbc3e9133a75b411a3a6d705dca2e9565c660123b6535babb7567c28f024",
+//     "vout": 11
+//   },
+//   "network": "43fe44",
+//   "total_supply": 2859,
+//   "min_amount": 0,
+//   "max_hops": 202,
+//   "reissuance_enabled": true,
+//   "reissuance_utxo": "1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef",
+//   "burn_address": "abcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890",
+//   "commitment_scheme": 1,
+//   "blueprint_type": 1,
+//   "owner_utxo": "49cafdbc3e9133a75b411a3a6d705dca2e9565b660123b6535babb7567c28f02"
+// }
+
+// console.log(encode(c1).length, encodingLength(c1))

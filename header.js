@@ -1,6 +1,7 @@
 var string = require('../bitcoin-consensus-encoding/string.js')
 var int = require('../bitcoin-consensus-encoding/int.js')
 var bool = require('../bitcoin-consensus-encoding/boolean.js')
+var btcOutpoint = require('../bitcoin-consensus-encoding/outpoint.js')
 var outpoint = require('./outpoint.js')
 var assert = require('nanoassert')
 
@@ -34,19 +35,19 @@ function encode (contract, buf, offset) {
     string.encode('', buf, offset)
   }
   offset += string.encode.bytes
-
-  outpoint.encode(contract.issuance_utxo, buf, offset, true)
-  offset += outpoint.encode.bytes
-
+  
+  btcOutpoint.encode(contract.issuance_utxo, buf, offset, true)
+  offset += btcOutpoint.encode.bytes
+  
   string.encode(contract.network, buf, offset, true)
   offset += string.encode.bytes
-
+  
   int.encode(BigInt(contract.total_supply), buf, offset, 64)
   offset += int.encode.bytes
-
+  
   int.encode(BigInt(contract.min_amount), buf, offset, 64)
   offset += int.encode.bytes
-
+  
   if (contract.max_hops || contract.max_hops === 0) {
     buf.writeUInt8(1, offset)
     offset++
@@ -101,8 +102,8 @@ function decode (buf, offset) {
   contract.contract_url = string.decode(buf, offset)
   offset += string.decode.bytes
 
-  contract.issuance_utxo = outpoint.decode(buf, offset)
-  offset += outpoint.decode.bytes
+  contract.issuance_utxo = btcOutpoint.decode(buf, offset)
+  offset += btcOutpoint.decode.bytes
 
   contract.network = string.decode(buf, offset, 3)
   offset += string.decode.bytes
@@ -147,7 +148,7 @@ function decode (buf, offset) {
 }
 
 function encodingLength (contract) {
-  var length = 0
+  var length = 0  
   length += string.encodingLength(contract.title)
   length += 2
   if (contract.description) {
@@ -160,7 +161,8 @@ function encodingLength (contract) {
   } else {
     length++
   }
-  length += outpoint.encodingLength(contract.issuance_utxo)
+
+  length += btcOutpoint.encodingLength(contract.issuance_utxo)
   length += string.encodingLength(contract.network, true)
   length += 8
   length += 8

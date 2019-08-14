@@ -9,10 +9,10 @@ module.exports = {
 }
 
 function encode (outpoint, buf, offset) {
+  
   if (!buf) buf = Buffer.alloc(encodingLength(outpoint))
   if (!offset) offset = 0
   var oldOffset = offset
-
   switch (outpoint.type) {
     case 'UTXO' :
       buf.writeUInt8(1, offset)
