@@ -12,7 +12,7 @@ module.exports = {
 }
 
 function encode (contract, buf, offset) {
-  if (!buf) buf = Buffer.alloc(encodingLength(contract))
+  if (!buf) buf = Buffer.alloc(151)
   if (!offset) offset = 0
   var startIndex = offset
 
@@ -183,6 +183,6 @@ function encodingLength (contract) {
   }
   length += 1
   length += 2
-
+  
   return length
 }

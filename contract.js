@@ -46,6 +46,7 @@ function encodingLength (contract) {
 
   length += header.encodingLength(contract)
   length += body.encodingLength(contract)
+
   return length
 }
 

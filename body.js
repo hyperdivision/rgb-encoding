@@ -128,7 +128,6 @@ function decode (buf, offset, blueprint) {
 
       contract.max_hops = int.decode(buf, offset, 2)
       offset += int.decode.bytes
-
       contract.burn_address = string.decode(buf, offset)
       offset += string.decode.bytes
 
