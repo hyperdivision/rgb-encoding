@@ -35,8 +35,8 @@ const SealTypes = {
 
 module.exports = {
   encode: encode,
-  // decode: decode,
-  // encodingLength: encodingLength
+  decode: decode,
+  encodingLength: encodingLength
 }
 
 function encode (schema, buf, offset) {
@@ -86,13 +86,14 @@ function encode (schema, buf, offset) {
   let sealCounter = 0
 
   for (let seal of schema.sealTypes) {
-    buf.writeUInt8(sealCounter, offset++)
-
     sealTypeIndex[seal.title] = sealCounter
     sealCounter++
 
     string.encode(seal.title, buf, offset)
     offset += string.encode.bytes
+
+    buf.writeUInt8(SealTypes[seal.type], offset)
+    offset++
   }
 
   varint.encode(schema.proofTypes.length, buf, offset)
@@ -101,12 +102,13 @@ function encode (schema, buf, offset) {
   for (let proof of schema.proofTypes) {
     string.encode(proof.name, buf, offset)
     offset += string.encode.bytes
-
-    encodeTypeList(proof.fields, fieldTypeIndex, buf, offset)
+  
+    encodeTypeList(proof.fields, fieldTypeIndex, buf, offset) 
     if (proof.unseals) {
       encodeTypeList(proof.unseals, sealTypeIndex, buf, offset)
     } else {
       buf.writeUInt8(0, offset)
+      offset++
     }
     encodeTypeList(proof.seals, sealTypeIndex, buf, offset)
   }
@@ -114,7 +116,7 @@ function encode (schema, buf, offset) {
   encode.bytes = offset - startIndex
   return buf
 
-  function encodeTypeList (list, types, buf, offset) {
+  function encodeTypeList (list, types) {
     varint.encode(list.length, buf, offset)
     offset += varint.encode.bytes
 
@@ -138,6 +140,12 @@ function encode (schema, buf, offset) {
           int.encode(-1, buf, offset)
           offset += int.encode.bytes
           break
+
+        case 'any' :
+          buf.writeUInt8(0, offset++)
+          int.encode(-1, buf, offset)
+          offset += int.encode.bytes
+          break
       }
     }
   }
@@ -156,18 +164,19 @@ function decode (buf, offset) {
 
   schema.version.push(varint.decode(buf, offset).toString(10))
   offset += varint.decode.bytes
-  schema.version.push(buf.readUInt8(offset++).toString(10))
-  schema.version.push(buf.readUInt8(offset++).toString(10))
+  schema.version.push(buf.readUInt8(offset).toString(10))
+  schema.version.push(buf.readUInt8(offset + 1).toString(10))
+  offset += 2
 
-  schema.version = String.join('.', schema.version)
+  schema.version = schema.version.join('.')
 
-  if (!Buffer.subarray(offset, offset + 32).compare(Buffer.alloc(32))) {
-    schema.prevSchema = hash.decode(buf, offset, 32)
-    offset += hash.decode.bytes
-  } else {
+  schema.prevSchema = hash.decode(buf, offset, 32)
+  offset += hash.decode.bytes
+
+  if (!schema.prevSchema.compare(Buffer.alloc(32))) {
     schema.prevSchema = 0
   }
-
+  
   const fieldCounter = varint.decode(buf, offset)
   offset += varint.decode.bytes
 
@@ -179,8 +188,9 @@ function decode (buf, offset) {
     field.title = string.decode(buf, offset)
     offset += string.decode.bytes
 
-    field.type = buf.readUInt8(offset++)
-    Object.entries(FieldTypes).forEach([key, value] => {
+    field.type = buf.readUInt8(offset)
+    offset++
+    Object.entries(FieldTypes).forEach(([key, value]) => {
       if (value === field.type) field.type = key
     })
 
@@ -196,11 +206,14 @@ function decode (buf, offset) {
 
   for (let i = 0; i < sealCounter; i++) {
     const seal = {}
+
     seal.title = string.decode(buf, offset)
     offset += string.decode.bytes
 
-    seal.type = buf.readUInt8(offset++)
-    Object.entries(SealTypes).forEach([key, value] => {
+    seal.type = buf.readUInt8(offset)
+    offset++
+
+    Object.entries(SealTypes).forEach(([key, value]) => {
       if (value === seal.type) seal.type = key
     })
 
@@ -233,7 +246,7 @@ function decode (buf, offset) {
   decode.bytes = offset - startIndex
   return schema
 
-  function decodeTypeList (buf, offset, types) {
+  function decodeTypeList (types) {
     const list = []
 
     const counter = varint.decode(buf, offset)
@@ -253,6 +266,56 @@ function decode (buf, offset) {
 
     return list
   }
+}
+
+function encodingLength (schema) {
+  let length = 0
+
+  length += string.encodingLength(schema.name)
+
+  const versionArray = schema.version.split('.')
+
+  length += varint.encodingLength(parseInt(versionArray[0]))
+  length += 2
+
+  let schemaHash = schema.prevSchema ? schema.prevSchema : Buffer.alloc(32)
+  length += hash.encodingLength(schemaHash)
+
+  length += varint.encodingLength(schema.fieldTypes.length)
+
+  for (let field of schema.fieldTypes) {
+    length += string.encodingLength(field.title)
+    length++
+  }
+
+  length += varint.encodingLength(schema.sealTypes.length)
+
+  for (let seal of schema.sealTypes) {
+    length += string.encodingLength(seal.title)
+    length++
+
+  }
+
+  length += varint.encodingLength(schema.proofTypes.length)
+
+  for (let proof of schema.proofTypes) {
+    length += string.encodingLength(proof.name)
+
+    length += varint.encodingLength(proof.fields.length)
+    length += proof.fields.length * 3
+
+    if (proof.unseals) {
+      length += varint.encodingLength(proof.unseals.length)
+      length += proof.unseals.length * 3
+    } else {
+      length++
+    }
+
+    length += varint.encodingLength(proof.seals.length)
+    length += proof.seals.length * 3
+  }
+
+  return length
 }
 
 const test = {
@@ -352,4 +415,4 @@ const test = {
 
 let testBuf = Buffer.alloc(300)
 
-console.log(encode(test, testBuf))
+console.log(decode(encode(test)))
