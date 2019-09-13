@@ -1,7 +1,7 @@
-var string = require('../bitcoin-consensus-encoding/string.js')
-var int = require('../bitcoin-consensus-encoding/int.js')
-const varint = require('../bitcoin-consensus-encoding/var-int.js')
-const hash = require('../bitcoin-consensus-encoding/hash.js')
+var string = require('bitcoin-consensus-encoding').string
+var int = require('bitcoin-consensus-encoding').int
+const varint = require('bitcoin-consensus-encoding').varint
+const hash = require('bitcoin-consensus-encoding').hash
 var assert = require('nanoassert')
 
 const FieldTypes = {
@@ -121,8 +121,8 @@ function encode (schema, buf, offset) {
     offset += varint.encode.bytes
 
     for (let item of list) {
-      buf.writeUInt8(types[item.title], offset)
-      offset++
+      varint.encode(types[item.title], buf, offset)
+      offset += varint.encode.bytes
 
       switch (item.value) {
         case 'optional' :
@@ -232,13 +232,13 @@ function decode (buf, offset) {
     proof.name = string.decode(buf, offset)
     offset += string.decode.bytes
 
-    proof.fields = decodeTypeList(buf, offset, fieldTypeIndex)
+    proof.fields = decodeTypeList(fieldTypeIndex)
     if (!buf.readUInt8(offset)) {
       offset++
     } else {
-      proof.unseals = decodeTypeList(buf, offset, sealTypeIndex)
+      proof.unseals = decodeTypeList(sealTypeIndex)
     }
-    proof.seals = decodeTypeList(buf, offset, sealTypeIndex)
+    proof.seals = decodeTypeList(sealTypeIndex)
 
     schema.proofTypes.push(proof)
   }
@@ -255,11 +255,18 @@ function decode (buf, offset) {
     for (let i = 0; i < counter; i++) {
       const item = {}
 
-      item.title = types[buf.readUInt8(offset++)]
+      item.title = types[varint.decode(buf, offset)]
+      offset += varint.decode.bytes
 
       item.value = {}
       item.value.minimum = int.decode(buf, offset++, 1, false)
       item.value.maximum = int.decode(buf, offset++, 1, false)
+
+      if (item.value.minimum == 0) {
+        item.value = item.value.maximum < 0 ? 'any' : 'optional'
+      } else if (item.value.minimum == 1) {
+        item.value = item.value.maximum < 0 ? 'many' : 'single'
+      }
 
       list.push(item)
     }
@@ -415,4 +422,10 @@ const test = {
 
 let testBuf = Buffer.alloc(300)
 
-console.log(decode(encode(test)))
+const schema = decode(encode(test))
+console.log(JSON.stringify(schema, null, 2))
+console.log(schema.proofTypes[0].seals)
+let proof = 'upgrade_signal'
+let proofTypeIndex = schema.proofTypes.findIndex((item) =>
+    item.name === proof)
+console.log(proofTypeIndex)

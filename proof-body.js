@@ -1,124 +1,110 @@
-const outpoint = require('../bitcoin-consensus-encoding/lib/outpoint.js')
-const string = require('../bitcoin-consensus-encoding/lib/string.js')
-const int = require('../bitcoin-consensus-encoding/lib/int.js')
-const bool = require('../bitcoin-consensus-encoding/lib/boolean.js')
-const fvi = require('../bitcoin-consensus-encoding/lib/flag-var-int.js')
-const assert = require('nanoassert')
+var string = require('../bitcoin-consensus-encoding/lib/string.js')
+var int = require('../bitcoin-consensus-encoding/lib/int.js')
+var assert = require('nanoassert')
+var seals = require('./seals.js')
+var state = require('./state.js')
+var metadata = require('./metadata')
 
 module.exports = {
-  encode,
-  decode,
-  encodingLength
+  encode: encode,
+  // decode: decode,
+  // encodingLength: encodingLength
 }
 
-function encode (seals, buf, offset) {
-  if (!buf) buf = Buffer.alloc(encodingLength(seals))
+function encode (proof, schema, buf, offset) {
+  if (!buf) buf = Buffer.alloc(encodingLength(proof, schema))
   if (!offset) offset = 0
   const startIndex = offset
-
-  let sealType
-
-  for (let seal of seals) {
-    if (sealType === undefined) sealType = seal.type
-    if (seal.type !== sealType) {
-      sealType = seal.type
-
-      buf.writeUInt8(0x7f, offset)
-      offset++
-    }
-    
-    seal.info = seal.outpoint.split(':')
-
-    const fver = {}
-    fver.value = seal.info[1]
-    fver.flag = !(!seal.outpoint)
-
-    fvi.encode(fver, buf, offset)
-    offset += fvi.encode.bytes
-
-    if (seal.outpoint) {
-      let txidBytes = Buffer.from(seal.info[0], 'hex')
-      buf.set(txidBytes, offset)
-      offset += txidBytes.byteLength
-    }
-  }
-
-  buf.writeUInt8(0xff, offset)
+  
+  let proofTypeIndex = schema.proofTypes.findIndex((item) =>
+    item.name === proof.type)
+  buf.writeUInt8(proofTypeIndex, offset)
   offset++
+
+  seals.encode(proof.seals, buf, offset)
+  offset += seals.encode.bytes
+
+  state.encode(proof, schema, buf, offset)
+  offset += state.encode.bytes
+
+  metadata.encode(proof, schema, buf, offset)
+  offset += metadata.encode.bytes
 
   encode.bytes = offset - startIndex
   return buf
 }
 
-function decode (buf, offset) {
+function decode (buf, offset, schema) {
+  assert(schema, 'schema is required') // TODO : only parse seals
   if (!offset) offset = 0
   const startIndex = offset
 
-  const seals = []
-  let typeCounter = 0
+  const proof = {}
 
-  while (true) {
-    const seal = {}
-    const fvout = fvi.decode(buf, offset)
+  let proofTypeIndex = buf.readUInt8(offset++)
+  proof.type = schema.proofTypes[proofTypeIndex].name
 
-    offset += fvi.decode.bytes
+  proof.seals = seals.decode(buf, offset)
+  offset += seals.decode.bytes
 
-    if (fvout.value === 0x7f) {
-      if (fvout.flag) break
-      typeCounter++
-      continue
-    }
+  state.decode(buf, offset, proof, schema)
+  offset += state.decode.bytes
 
-    seal.vout = fvout.value
-    seal.type = typeCounter
-
-    if (fvout.flag) {
-      seal.txid = buf.subarray(offset, offset + 32).toString('hex')
-      offset += 32
-    }
-
-    seals.push(seal)
-  }
+  metadata.decode(buf, offset, proof, schema)
+  offset += metadata.decode.bytes
 
   decode.bytes = offset - startIndex
-  return seals
+  return proof
 }
 
-function encodingLength (seals) {
+function encodingLength (proof, schema) {
+  assert(schema, 'schema must be known')
   let length = 0
-  let sealType
 
-  for (let seal of seals) {
-    if (!sealType) sealType = seal.type
-    if (sealType && seal.type !== sealType) {
-      length++
+  length++
+
+  length += seals.encodingLength(proof.seals)
+  length += state.encodingLength(proof, schema)
+  length += metadata.encodingLength(proof, schema)
+
+  return length
+}
+
+const testProof = {
+  ver: 1,
+  format: 'root',
+  schema: 'sm1p9au5tw58z34aejm6hcjn5fnlvu2pdunq2vux5ymzks33yffrazxskfnvz5',
+  network: 'bitcoin:testnet',
+  root: '5700bdccfc6209a5460dc124403eed6c3f5ba58da0123b392ab0b1fa23306f27:4',
+  type: 'primary_issue',
+  fields: {
+    title: 'Private Company Ltd Shares',
+    ticker: 'PLS',
+    dust_limit: 1
+  },
+  seals: [
+    {
+      type: 'assets',
+      outpoint: '5700bdccfc6209a5460dc124403eed6c3f5ba58da0123b392ab0b1fa23306f27:0',
+      amount: 1000000
+    },
+    {
+      type: 'inflation',
+      outpoint: '5700bdccfc6209a5460dc124403eed6c3f5ba58da0123b392ab0b1fa23306f27:1'
+    },
+    {
+      type: 'upgrade',
+      outpoint: '5700bdccfc6209a5460dc124403eed6c3f5ba58da0123b392ab0b1fa23306f27:3'
+    },
+    {
+      type: 'pruning',
+      outpoint: '5700bdccfc6209a5460dc124403eed6c3f5ba58da0123b392ab0b1fa23306f27:2'
     }
-
-    const outpoint = seal.outpoint.split(':')
-
-    const fvout = {}
-    fvout.value = outpoint[1]
-    fvout.flag = !(!seal.outpoint)
-
-    length += fvi.encodingLength(fvout)
-
-    if (seal.outpoint) length += 32
-  }
-  
-  return length + 1
+  ],
+  pubkey: '0262b06cb205c3de54717e0bc0eab2088b0edb9b63fab499f6cac87548ca205be1'
 }
 
-test = []
-
-for (let i = 0; i < 10; i++) {
-  const seal = {}
-  seal.type = Math.floor(i / 3)
-  seal.vout = i
-  if (i % 3 === 0) seal.txid = '1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef'
-  test.push(seal)
-}
-
-const schema = {
+const test = {
   name: 'RGB',
   version: '1.0.0',
   prevSchema: 0,
@@ -131,8 +117,7 @@ const schema = {
     { title: 'url', type: 'str' },
     { title: 'max_supply', type: 'fvi' },
     { title: 'dust_limit', type: 'vi' },
-    { title: 'signature', type: 'ecdsa'},
-    { title: 'original_pubkey', type: 'pubkey'}
+    { title: 'signature', type: 'ecdsa'}
   ],
   sealTypes: [
     { title: 'assets', type: 'balance' },
@@ -214,6 +199,4 @@ const schema = {
   ]
 }
 
-// let encoded = encode(test)
-// console.log(encoded)
-// console.log(decode(encoded, null, schema))
+console.log(decode(encode(testProof, test), null, test))
