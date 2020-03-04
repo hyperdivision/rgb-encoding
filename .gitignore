@@ -6,3 +6,4 @@ verification_protocol.txt
 example.proof
 proof-generator.js
 .DS_Store
+lib/test.js

@@ -1,0 +1,110 @@
+{
+  "u8": {
+    "type": "int",
+    "decode": [
+      1
+    ]
+  },
+  "u16": {
+    "type": "int",
+    "decode": [
+      2
+    ]
+  },
+  "u32": {
+    "type": "int",
+    "decode": [
+      4
+    ]
+  },
+  "u64": {
+    "type": "int",
+    "decode": [
+      8
+    ]
+  },
+  "i8": {
+    "type": "int",
+    "decode": [
+      1,
+      false
+    ]
+  },
+  "i16": {
+    "type": "int",
+    "decode": [
+      2,
+      false
+    ]
+  },
+  "i32": {
+    "type": "int",
+    "decode": [
+      4,
+      false
+    ]
+  },
+  "i64": {
+    "type": "int",
+    "decode": [
+      8,
+      false
+    ]
+  },
+  "vi": {
+    "type": "varint",
+    "decode": []
+  },
+  "fvi": {
+    "type": "fvi",
+    "decoed": []
+  },
+  "str": {
+    "type": "string",
+    "decode": []
+  },
+  "bytes": {
+    "type": "bytes",
+    "decode": []
+  },
+  "sha256": {
+    "type": "hash",
+    "decode": [
+      32
+    ]
+  },
+  "sha256d": {
+    "type": "hash",
+    "decode": [
+      32
+    ]
+  },
+  "ripmd160": {
+    "type": "hash",
+    "decode": [
+      20
+    ]
+  },
+  "hash160": {
+    "type": "hash",
+    "decode": [
+      20
+    ]
+  },
+  "outpoint": {
+    "type": "outpoint",
+    "decode": []
+  },
+  "soutpoint": {
+    "type": "soutpoint",
+    "decode": []
+  },
+  "pubkey": {
+    "type": "pubkey",
+    "decode": []
+  },
+  "ecdsa": {
+    "type": "ecdsa",
+    "decode": []
+  }
+}
